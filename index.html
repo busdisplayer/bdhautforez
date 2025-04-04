@@ -324,5 +324,80 @@
       afficherProchainBus();
     });
   </script>
+    <div class="horloge" id="horloge">
+    <span class="jour" id="jour"></span>
+    <span class="date" id="date"></span>
+    <span class="heure" id="heure"></span>
+    <span class="seconde" id="seconde"></span>
+  </div>
+
+  <style>
+    /* Le div horloge en bande bas */
+    .horloge {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #1e90ff; /* Fond bleu */
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .horloge span {
+      display: inline-block;
+      margin: 0 15px;
+    }
+
+    .jour {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .date {
+      font-size: 18px;
+    }
+
+    .heure {
+      font-size: 20px;
+    }
+
+    .seconde {
+      font-size: 20px;
+      color: #ff6347; /* Couleur rouge pour les secondes */
+    }
+  </style>
+
+  <script>
+    // Fonction pour obtenir la date et l'heure actuelles
+    function updateHorloge() {
+      const now = new Date();
+
+      // Jours de la semaine
+      const jours = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+      const jour = jours[now.getDay()];
+
+      // Formatage de la date (jour mois année)
+      const date = now.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      // Formatage de l'heure (heure:minute:seconde)
+      const heure = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const seconde = now.getSeconds().toString().padStart(2, '0'); // Ajout de zéro pour les secondes
+
+      // Mettre à jour l'affichage
+      document.getElementById('jour').textContent = jour;
+      document.getElementById('date').textContent = date;
+      document.getElementById('heure').textContent = heure;
+      document.getElementById('seconde').textContent = ":" + seconde;
+    }
+
+    // Mise à jour de l'horloge toutes les secondes
+    setInterval(updateHorloge, 1000);
+    updateHorloge();  // Lancer immédiatement l'horloge au chargement de la page
+  </script>
+
 </body>
 </html>
