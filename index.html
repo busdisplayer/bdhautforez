@@ -65,5 +65,28 @@ async function getVacationStatus() {
 // Exécute la fonction
 getVacationStatus();
   </script>
+  <script>
+    // Définition des horaires pour chaque statut
+const horairesParStatut = {
+    0: ["Pas de service"], // Dimanche
+    1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire (Lun, Mar, Jeu, Ven)
+    2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
+    3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
+    4: ["Pas de service"], // Jour férié
+    5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
+    6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
+};
+
+// Fonction pour récupérer les horaires du jour
+function getHorairesDuJour(stateHor) {
+    return horairesParStatut[stateHor] || ["Erreur : Statut inconnu"]; // Retourne les horaires ou un message d'erreur
+}
+
+// Utilisation avec le statut actuel (stateHor est défini dans ton autre script)
+const horairesEncours = getHorairesDuJour(stateHor);
+
+// Affichage des horaires sélectionnés
+console.log("Horaires du jour :", horairesEncours);
+  </script>
 </body>
 </html>
