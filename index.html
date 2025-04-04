@@ -260,12 +260,8 @@
     function afficherProchainBus() {
       const tableBody = document.getElementById("busTable").getElementsByTagName("tbody")[0];
       tableBody.innerHTML = ""; // Réinitialiser le tableau avant de l'afficher
-
-      // Filtrer et trier les lignes de bus
-      const filteredData = busData.filter(bus => bus.ligne === "L13");
-
       // Tri des horaires par temps d'attente
-      filteredData.forEach(bus => {
+busData.forEach(bus => {
         const horaires = bus.horaires[stateHor];
         let tempsAttente = -1;
         let nextBusTime = "";
