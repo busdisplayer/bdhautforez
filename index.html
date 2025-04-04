@@ -1,0 +1,60 @@
+<! DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Bd du Ht Forez - Transports en commun</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <script>
+    async function getVacationStatus() {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
+    const isWednesday = dayOfWeek === 3;
+    let status;
+
+    // Vérifier si c'est un week-end
+    if (dayOfWeek === 6 || dayOfWeek === 0) {
+        status = dayOfWeek === 6 ? "Samedi" : "Dimanche";
+    } else {
+        try {
+            // Récupérer les vacances scolaires pour l'Académie de Lyon (zone A)
+            const response = await fetch("https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-calendrier-scolaire/records?where=zone='A'");
+            const data = await response.json();
+            
+            const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+            let isHoliday = false;
+            let isSummer = false;
+
+            data.records.forEach(record => {
+                const startDate = new Date(record.fields.start_date);
+                const endDate = new Date(record.fields.end_date);
+                if (today >= startDate && today <= endDate) {
+                    isHoliday = true;
+                    if (record.fields.description.includes("Été")) {
+                        isSummer = true;
+                    }
+                }
+            });
+
+            if (isHoliday) {
+                status = isSummer ? "Vacances d'été" : "Semaine de vacances scolaires";
+            } else {
+                status = "Semaine scolaire";
+            }
+        } catch (error) {
+            console.error("Erreur lors de la récupération des vacances scolaires :", error);
+            status = "Indisponible";
+        }
+    }
+
+    console.log("État actuel :", status);
+    if (isWednesday) {
+        console.log("C'est un mercredi");
+    }
+}
+
+getVacationStatus();
+  </script>
+</body>
+</html>
