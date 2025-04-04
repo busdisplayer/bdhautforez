@@ -57,7 +57,7 @@
     // Données des bus avec les horaires pour chaque ligne selon les périodes
     const busData = [
       {
-        ligne: "Ligne 1",
+        ligne: "L13",
         destination: "Place Bellecour",
         horaires: {
           0: ["Pas de service"], // Dimanche
@@ -70,7 +70,7 @@
         }
       },
       {
-        ligne: "Ligne 2",
+        ligne: "L13",
         destination: "Gare Part-Dieu",
         horaires: {
           0: ["Pas de service"], // Dimanche
@@ -83,7 +83,7 @@
         }
       },
       {
-        ligne: "Ligne 3",
+        ligne: "L13",
         destination: "Vieux Lyon",
         horaires: {
           0: ["Pas de service"], // Dimanche
@@ -93,6 +93,32 @@
           4: ["Pas de service"], // Jour férié
           5: ["08:30", "11:00", "14:30", "17:00"], // Vacances scolaires
           6: ["09:00", "11:30", "14:30", "17:00"], // Vacances d'été
+        }
+      },
+      {
+        ligne: "L32",
+        destination: "Place Bellecour",
+        horaires: {
+          0: ["Pas de service"], // Dimanche
+          1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
+          2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
+          3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
+          4: ["Pas de service"], // Jour férié
+          5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
+          6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
+        }
+      },
+      {
+        ligne: "L32",
+        destination: "Place Bellecour",
+        horaires: {
+          0: ["Pas de service"], // Dimanche
+          1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
+          2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
+          3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
+          4: ["Pas de service"], // Jour férié
+          5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
+          6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
         }
       }
     ];
