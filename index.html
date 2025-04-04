@@ -7,53 +7,59 @@
 </head>
 <body>
   <script>
-    async function getVacationStatus() {
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Dimanche, 1 = Lundi, ..., 6 = Samedi
-    const isWednesday = dayOfWeek === 3;
-    let status;
+    const fetch = require("node-fetch"); // Nécessaire pour un environnement Node.js
 
-    // Vérifier si c'est un week-end
-    if (dayOfWeek === 6 || dayOfWeek === 0) {
-        status = dayOfWeek === 6 ? "Samedi" : "Dimanche";
-    } else {
-        try {
-            // Récupérer les vacances scolaires pour l'Académie de Lyon (zone A)
-            const response = await fetch("https://data.education.gouv.fr/api/v2/catalog/datasets/fr-en-calendrier-scolaire/records?where=zone='A'");
-            const data = await response.json();
-            
-            const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-            let isHoliday = false;
-            let isSummer = false;
+// Fonction pour récupérer l'année actuelle et formater l'URL
+function getApiUrl() {
+    const currentYear = new Date().getFullYear();
+    return `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records?limit=20&refine=start_date%3A%22${currentYear}%22&refine=zones%3A%22Zone%20A%22&refine=location%3A%22Lyon%22&refine=population%3A%22-%22`;
+}
 
-            data.records.forEach(record => {
-                const startDate = new Date(record.fields.start_date);
-                const endDate = new Date(record.fields.end_date);
-                if (today >= startDate && today <= endDate) {
-                    isHoliday = true;
-                    if (record.fields.description.includes("Été")) {
-                        isSummer = true;
-                    }
-                }
-            });
+// Fonction pour récupérer les vacances et déterminer l'état du jour
+async function getVacationStatus() {
+    const url = getApiUrl();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!data.results) throw new Error("Données non disponibles");
 
-            if (isHoliday) {
-                status = isSummer ? "Vacances d'été" : "Semaine de vacances scolaires";
-            } else {
-                status = "Semaine scolaire";
-            }
-        } catch (error) {
-            console.error("Erreur lors de la récupération des vacances scolaires :", error);
-            status = "Indisponible";
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Dimanche, 6 = Samedi
+        let status = "Semaine scolaire"; // Valeur par défaut
+
+        // Vérifie si aujourd'hui est un mercredi
+        const isWednesday = dayOfWeek === 3;
+
+        // Vérifie si aujourd'hui est un week-end
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            status = dayOfWeek === 0 ? "Dimanche" : "Samedi";
         }
-    }
 
-    console.log("État actuel :", status);
-    if (isWednesday) {
-        console.log("C'est un mercredi");
+        // Vérifie si aujourd'hui est un jour férié (exemple rapide, à améliorer avec une API dédiée)
+        const publicHolidays = ["2025-01-01", "2025-05-01", "2025-07-14", "2025-12-25"]; // Ajouter d'autres dates
+        const todayStr = today.toISOString().split("T")[0];
+        if (publicHolidays.includes(todayStr)) {
+            status = "Jour férié";
+        }
+
+        // Vérifie si aujourd'hui est une période de vacances
+        for (const vacation of data.results) {
+            const startDate = new Date(vacation.start_date);
+            const endDate = new Date(vacation.end_date);
+            if (today >= startDate && today <= endDate) {
+                status = vacation.description === "Vacances d'Été" ? "Vacances d'été" : "Semaine de vacances scolaires";
+                break;
+            }
+        }
+
+        console.log(`Aujourd'hui, nous sommes : ${status}`);
+        if (isWednesday) console.log("Note : Aujourd'hui est un mercredi.");
+    } catch (error) {
+        console.error("Erreur lors de la récupération des données :", error);
     }
 }
 
+// Exécute la fonction
 getVacationStatus();
   </script>
 </body>
