@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>Bd du Ht Forez - Transports en commun</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
+  <title>Bd du Ht Forez - Transports en commun</title>
+  <style>
     table {
       width: 100%;
       border-collapse: collapse;
@@ -37,7 +37,7 @@
   </style>
 </head>
 <body>
-   <h1>Prochains Bus - Bd du Ht Forez</h1>
+  <h1>Prochains Bus - Bd du Ht Forez</h1>
 
   <table id="busTable">
     <thead>
@@ -52,43 +52,61 @@
       <!-- Le tableau sera rempli par le script -->
     </tbody>
   </table>
+
   <script>
+    // Données des bus avec les horaires pour chaque ligne selon les périodes
+    const busData = [
+      {
+        ligne: "Ligne 1",
+        destination: "Place Bellecour",
+        horaires: {
+          0: ["Pas de service"], // Dimanche
+          1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
+          2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
+          3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
+          4: ["Pas de service"], // Jour férié
+          5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
+          6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
+        }
+      },
+      {
+        ligne: "Ligne 2",
+        destination: "Gare Part-Dieu",
+        horaires: {
+          0: ["Pas de service"], // Dimanche
+          1: ["06:45", "08:00", "10:30", "12:30", "16:00", "17:30"], // Semaine scolaire
+          2: ["07:30", "09:00", "12:30", "15:00"], // Mercredi
+          3: ["09:00", "11:00", "14:00", "16:30"], // Samedi
+          4: ["Pas de service"], // Jour férié
+          5: ["08:00", "10:00", "13:00", "15:00"], // Vacances scolaires
+          6: ["09:00", "12:00", "15:00", "17:30"], // Vacances d'été
+        }
+      },
+      {
+        ligne: "Ligne 3",
+        destination: "Vieux Lyon",
+        horaires: {
+          0: ["Pas de service"], // Dimanche
+          1: ["07:00", "08:30", "10:00", "12:00", "15:30", "17:00"], // Semaine scolaire
+          2: ["08:00", "09:30", "13:00", "16:30"], // Mercredi
+          3: ["09:30", "11:30", "14:00", "16:30"], // Samedi
+          4: ["Pas de service"], // Jour férié
+          5: ["08:30", "11:00", "14:30", "17:00"], // Vacances scolaires
+          6: ["09:00", "11:30", "14:30", "17:00"], // Vacances d'été
+        }
+      }
+    ];
+
     let stateHor = -1; // -1 = erreur ou état inconnu
-    let wedBool = false;
     let horairesEncours = [];
 
-    const horairesParStatut = {
-      0: ["Pas de service"], // Dimanche
-      1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
-      2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
-      3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
-      4: ["Pas de service"], // Jour férié
-      5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
-      6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
-    };
-
+    // Fonction pour récupérer l'URL de l'API pour les vacances scolaires
     function getApiUrl() {
       const currentYear = new Date().getFullYear();
       return `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records?limit=20&refine=start_date%3A%22${currentYear}%22&refine=zones%3A%22Zone%20A%22&refine=location%3A%22Lyon%22&refine=population%3A%22-%22`;
     }
 
-    function getStatusDescription(code) {
-      switch (code) {
-        case 0: return "Dimanche";
-        case 1: return "Semaine scolaire (Lundi, Mardi, Jeudi, Vendredi)";
-        case 2: return "Mercredi";
-        case 3: return "Samedi";
-        case 4: return "Jour férié";
-        case 5: return "Semaine de vacances scolaires";
-        case 6: return "Vacances d'été";
-        default: return "État inconnu";
-      }
-    }
-
-    function getHorairesDuJour(code) {
-      return horairesParStatut[code] || ["Erreur : Statut inconnu"];
-    }
-
+    // Fonction pour récupérer le statut des vacances
     async function getVacationStatus() {
       const url = getApiUrl();
       try {
@@ -100,21 +118,23 @@
         const dayOfWeek = today.getDay(); // 0 = Dimanche, 6 = Samedi
         let status = 1; // Par défaut : semaine scolaire
 
+        // Déterminer le statut en fonction du jour de la semaine
         if (dayOfWeek === 3) {
           status = 2; // Mercredi
-          wedBool = true;
         } else if (dayOfWeek === 0) {
           status = 0; // Dimanche
         } else if (dayOfWeek === 6) {
           status = 3; // Samedi
         }
 
+        // Vérifier les jours fériés
         const publicHolidays = ["2025-01-01", "2025-05-01", "2025-07-14", "2025-12-25"];
         const todayStr = today.toISOString().split("T")[0];
         if (publicHolidays.includes(todayStr)) {
           status = 4; // Jour férié
         }
 
+        // Vérifier si c'est pendant les vacances scolaires
         for (const vacation of data.results) {
           const startDate = new Date(vacation.start_date);
           const endDate = new Date(vacation.end_date);
@@ -125,55 +145,53 @@
         }
 
         stateHor = status;
-        horairesEncours = getHorairesDuJour(stateHor);
 
-        // Logs détaillés
+        // Log détaillé
         console.log("✅ Statut détecté :", stateHor);
         console.log("📅 Explication :", getStatusDescription(stateHor));
-        console.log("🕒 Horaires du jour :", horairesEncours);
-        if (wedBool) console.log("🔔 Aujourd'hui est un mercredi.");
-
       } catch (error) {
         console.error("❌ Erreur lors de la récupération des données :", error);
       }
     }
 
-    // Lancer tout ça
-    getVacationStatus();
-  </script>
-  <script>
-    // Exemple de données supplémentaires (ligne et destination)
-    const busData = [
-      { ligne: "Ligne 1", destination: "Place Bellecour", horaires: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"] },
-      { ligne: "Ligne 2", destination: "Gare Part-Dieu", horaires: ["06:45", "08:00", "10:30", "15:00", "17:30"] },
-      { ligne: "Ligne 3", destination: "Vieux Lyon", horaires: ["07:00", "08:45", "12:15", "16:45", "18:30"] },
-    ];
+    // Fonction pour afficher la description du statut
+    function getStatusDescription(code) {
+      switch (code) {
+        case 0: return "Dimanche";
+        case 1: return "Semaine scolaire";
+        case 2: return "Mercredi";
+        case 3: return "Samedi";
+        case 4: return "Jour férié";
+        case 5: return "Vacances scolaires";
+        case 6: return "Vacances d'été";
+        default: return "État inconnu";
+      }
+    }
 
     // Fonction pour calculer le temps d'attente (en minutes)
     function getTempsAttente(horaire) {
       const now = new Date();
       const nextBusTime = new Date(now.toDateString() + ' ' + horaire);
       const diffInMillis = nextBusTime - now;
-      
+
       if (diffInMillis < 0) return -1; // Pas de service (horaire déjà passé)
       return Math.ceil(diffInMillis / 60000); // Temps d'attente en minutes
     }
 
-    // Fonction pour afficher les horaires dans le tableau
+    // Fonction pour afficher les prochains bus
     function afficherProchainBus() {
       const tableBody = document.getElementById("busTable").getElementsByTagName("tbody")[0];
       tableBody.innerHTML = ""; // Réinitialiser le tableau avant de l'afficher
 
       busData.forEach(bus => {
-        const prochainesHeures = bus.horaires;
-        const now = new Date();
+        const horaires = bus.horaires[stateHor];
         let tempsAttente = -1;
         let nextBusTime = "";
         let status = "Pas de service";
 
         // Chercher le prochain bus
-        for (let i = 0; i < prochainesHeures.length; i++) {
-          const temps = prochainesHeures[i];
+        for (let i = 0; i < horaires.length; i++) {
+          const temps = horaires[i];
           const tempAttente = getTempsAttente(temps);
 
           if (tempAttente >= 0) {
@@ -207,21 +225,20 @@
         cellTempsAttente.textContent = status;
 
         // Ajout de classes pour styliser en fonction du statut
-        if (status === "Pas de service") {
-          cellTempsAttente.classList.add("pas-de-service");
-        } else if (status === "Imminent") {
+        if (status === "Imminent") {
           cellTempsAttente.classList.add("imminent");
         } else if (status === "En station") {
           cellTempsAttente.classList.add("en-station");
+        } else {
+          cellTempsAttente.classList.add("pas-de-service");
         }
       });
     }
 
-    // Lancer l'affichage du prochain bus au chargement de la page
-    afficherProchainBus();
-
-    // Optionnel : rafraîchir chaque minute
-    setInterval(afficherProchainBus, 60000);
+    // Initialisation
+    getVacationStatus().then(() => {
+      afficherProchainBus();
+    });
   </script>
 </body>
 </html>
