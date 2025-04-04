@@ -7,6 +7,8 @@
 </head>
 <body>
   <script>
+    let stateHor = "nostate";
+    let wedBool = false;
 // Fonction pour récupérer l'année actuelle et formater l'URL
 function getApiUrl() {
     const currentYear = new Date().getFullYear();
@@ -51,7 +53,10 @@ async function getVacationStatus() {
         }
 
         console.log(`Aujourd'hui, nous sommes : ${status}`);
-        if (isWednesday) console.log("Note : Aujourd'hui est un mercredi.");
+        if (isWednesday) {
+          console.log("Note : Aujourd'hui est un mercredi.");
+          wedBool = true;
+        }
     } catch (error) {
         console.error("Erreur lors de la récupération des données :", error);
     }
