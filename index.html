@@ -393,6 +393,23 @@ busData.forEach(bus => {
     // Mise à jour de l'horloge toutes les secondes
     setInterval(updateHorloge, 1000);
     updateHorloge();  // Lancer immédiatement l'horloge au chargement de la page
+
+    // Trier les lignes du tableau par temps d'attente croissant
+const rows = Array.from(tableBody.rows);  // Récupérer toutes les lignes du tableau
+rows.sort((rowA, rowB) => {
+  const tempAttenteA = rowA.cells[3].textContent; // Récupérer le temps d'attente de chaque ligne (colonne 3)
+  const tempAttenteB = rowB.cells[3].textContent;
+
+  // Convertir les valeurs en nombres et gérer les cas où il n'y a pas de service
+  const tempsA = (tempAttenteA === "Pas de service" || tempAttenteA === "Vacances scolaires" || tempAttenteA === "Vacances d'été") ? Infinity : parseInt(tempAttenteA);
+  const tempsB = (tempAttenteB === "Pas de service" || tempAttenteB === "Vacances scolaires" || tempAttenteB === "Vacances d'été") ? Infinity : parseInt(tempAttenteB);
+
+  return tempsA - tempsB; // Trier par temps d'attente croissant
+});
+
+// Réinsérer les lignes triées dans le tableau
+rows.forEach(row => tableBody.appendChild(row));
+
   </script>
 
 </body>
