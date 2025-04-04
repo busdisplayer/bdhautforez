@@ -4,20 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bd du Ht Forez - Transports en commun</title>
+  <!-- Importation de W3.CSS -->
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      color: #2c3e50;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      border: 1px solid #ddd;
     }
 
     table, th, td {
-      border: 1px solid black;
+      border: 1px solid #ddd;
     }
 
     th, td {
       padding: 10px;
       text-align: center;
+    }
+
+    th {
+      background-color: #2c3e50;
+      color: white;
     }
 
     .imminent {
@@ -34,27 +61,55 @@
       color: gray;
       font-weight: bold;
     }
+
+    .vacances {
+      color: #f39c12;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background-color: #ecf0f1;
+    }
+
+    .reload-button {
+      margin: 20px auto;
+      display: block;
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .reload-button:hover {
+      background-color: #2980b9;
+    }
   </style>
 </head>
 <body>
   <h1>Prochains Bus - Bd du Ht Forez</h1>
 
-  <table id="busTable">
-    <thead>
-      <tr>
-        <th>Destination</th>
-        <th>Ligne</th>
-        <th>Prochain bus</th>
-        <th>Temps d'attente</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Le tableau sera rempli par le script -->
-    </tbody>
-  </table>
+  <div class="container">
+    <button class="reload-button" onclick="getVacationStatus().then(() => afficherProchainBus())">Recharger les horaires</button>
+
+    <table id="busTable" class="w3-table w3-bordered w3-hoverable">
+      <thead>
+        <tr>
+          <th>Destination</th>
+          <th>Ligne</th>
+          <th>Prochain bus</th>
+          <th>Temps d'attente</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Le tableau sera rempli par le script -->
+      </tbody>
+    </table>
+  </div>
 
   <script>
-    // Données des bus avec les horaires pour chaque ligne selon les périodes
     const busData = [
       {
         ligne: "L13",
@@ -81,50 +136,10 @@
           5: ["08:00", "10:00", "13:00", "15:00"], // Vacances scolaires
           6: ["09:00", "12:00", "15:00", "17:30"], // Vacances d'été
         }
-      },
-      {
-        ligne: "L13",
-        destination: "Craponne sur Arzon - Croix de Mission",
-        horaires: {
-          0: ["Pas de service"], // Dimanche
-          1: ["07:00", "08:30", "10:00", "12:00", "15:30", "17:00"], // Semaine scolaire
-          2: ["08:00", "09:30", "13:00", "16:30"], // Mercredi
-          3: ["09:30", "11:30", "14:00", "16:30"], // Samedi
-          4: ["Pas de service"], // Jour férié
-          5: ["08:30", "11:00", "14:30", "17:00"], // Vacances scolaires
-          6: ["09:00", "11:30", "14:30", "17:00"], // Vacances d'été
-        }
-      },
-      {
-        ligne: "L32",
-        destination: "Montbrison - Beauregard",
-        horaires: {
-          0: ["Pas de service"], // Dimanche
-          1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
-          2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
-          3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
-          4: ["Pas de service"], // Jour férié
-          5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
-          6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
-        }
-      },
-      {
-        ligne: "L32",
-        destination: "Saint-Bonnet le Château",
-        horaires: {
-          0: ["Pas de service"], // Dimanche
-          1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
-          2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
-          3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
-          4: ["Pas de service"], // Jour férié
-          5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
-          6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
-        }
       }
     ];
 
     let stateHor = -1; // -1 = erreur ou état inconnu
-    let horairesEncours = [];
 
     // Fonction pour récupérer l'URL de l'API pour les vacances scolaires
     function getApiUrl() {
@@ -209,7 +224,11 @@
       const tableBody = document.getElementById("busTable").getElementsByTagName("tbody")[0];
       tableBody.innerHTML = ""; // Réinitialiser le tableau avant de l'afficher
 
-      busData.forEach(bus => {
+      // Filtrer et trier les lignes de bus
+      const filteredData = busData.filter(bus => bus.ligne === "L13");
+
+      // Tri des horaires par temps d'attente
+      filteredData.forEach(bus => {
         const horaires = bus.horaires[stateHor];
         let tempsAttente = -1;
         let nextBusTime = "";
@@ -255,6 +274,8 @@
           cellTempsAttente.classList.add("imminent");
         } else if (status === "En station") {
           cellTempsAttente.classList.add("en-station");
+        } else if (status === "Vacances scolaires" || status === "Vacances d'été") {
+          cellTempsAttente.classList.add("vacances");
         } else {
           cellTempsAttente.classList.add("pas-de-service");
         }
