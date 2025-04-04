@@ -4,8 +4,54 @@
   <title>Bd du Ht Forez - Transports en commun</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .imminent {
+      color: red;
+      font-weight: bold;
+    }
+
+    .en-station {
+      color: green;
+      font-weight: bold;
+    }
+
+    .pas-de-service {
+      color: gray;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+   <h1>Prochains Bus - Bd du Ht Forez</h1>
+
+  <table id="busTable">
+    <thead>
+      <tr>
+        <th>Destination</th>
+        <th>Ligne</th>
+        <th>Prochain bus</th>
+        <th>Temps d'attente</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Le tableau sera rempli par le script -->
+    </tbody>
+  </table>
   <script>
     let stateHor = -1; // -1 = erreur ou état inconnu
     let wedBool = false;
@@ -94,6 +140,88 @@
 
     // Lancer tout ça
     getVacationStatus();
+  </script>
+  <script>
+    // Exemple de données supplémentaires (ligne et destination)
+    const busData = [
+      { ligne: "Ligne 1", destination: "Place Bellecour", horaires: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"] },
+      { ligne: "Ligne 2", destination: "Gare Part-Dieu", horaires: ["06:45", "08:00", "10:30", "15:00", "17:30"] },
+      { ligne: "Ligne 3", destination: "Vieux Lyon", horaires: ["07:00", "08:45", "12:15", "16:45", "18:30"] },
+    ];
+
+    // Fonction pour calculer le temps d'attente (en minutes)
+    function getTempsAttente(horaire) {
+      const now = new Date();
+      const nextBusTime = new Date(now.toDateString() + ' ' + horaire);
+      const diffInMillis = nextBusTime - now;
+      
+      if (diffInMillis < 0) return -1; // Pas de service (horaire déjà passé)
+      return Math.ceil(diffInMillis / 60000); // Temps d'attente en minutes
+    }
+
+    // Fonction pour afficher les horaires dans le tableau
+    function afficherProchainBus() {
+      const tableBody = document.getElementById("busTable").getElementsByTagName("tbody")[0];
+      tableBody.innerHTML = ""; // Réinitialiser le tableau avant de l'afficher
+
+      busData.forEach(bus => {
+        const prochainesHeures = bus.horaires;
+        const now = new Date();
+        let tempsAttente = -1;
+        let nextBusTime = "";
+        let status = "Pas de service";
+
+        // Chercher le prochain bus
+        for (let i = 0; i < prochainesHeures.length; i++) {
+          const temps = prochainesHeures[i];
+          const tempAttente = getTempsAttente(temps);
+
+          if (tempAttente >= 0) {
+            tempsAttente = tempAttente;
+            nextBusTime = temps;
+            break;
+          }
+        }
+
+        // Mise à jour du statut et du temps d'attente
+        if (tempsAttente === -1) {
+          status = "Pas de service";
+        } else if (tempsAttente === 0) {
+          status = "En station";
+        } else if (tempsAttente < 2) {
+          status = "Imminent";
+        } else {
+          status = `${tempsAttente} min`;
+        }
+
+        // Ajouter une ligne au tableau
+        const row = tableBody.insertRow();
+        const cellDestination = row.insertCell(0);
+        const cellLigne = row.insertCell(1);
+        const cellProchainBus = row.insertCell(2);
+        const cellTempsAttente = row.insertCell(3);
+
+        cellDestination.textContent = bus.destination;
+        cellLigne.textContent = bus.ligne;
+        cellProchainBus.textContent = nextBusTime;
+        cellTempsAttente.textContent = status;
+
+        // Ajout de classes pour styliser en fonction du statut
+        if (status === "Pas de service") {
+          cellTempsAttente.classList.add("pas-de-service");
+        } else if (status === "Imminent") {
+          cellTempsAttente.classList.add("imminent");
+        } else if (status === "En station") {
+          cellTempsAttente.classList.add("en-station");
+        }
+      });
+    }
+
+    // Lancer l'affichage du prochain bus au chargement de la page
+    afficherProchainBus();
+
+    // Optionnel : rafraîchir chaque minute
+    setInterval(afficherProchainBus, 60000);
   </script>
 </body>
 </html>
