@@ -1,4 +1,4 @@
-<! DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <title>Bd du Ht Forez - Transports en commun</title>
@@ -7,86 +7,93 @@
 </head>
 <body>
   <script>
-    let stateHor = "nostate";
+    let stateHor = -1; // -1 = erreur ou état inconnu
     let wedBool = false;
-// Fonction pour récupérer l'année actuelle et formater l'URL
-function getApiUrl() {
-    const currentYear = new Date().getFullYear();
-    return `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records?limit=20&refine=start_date%3A%22${currentYear}%22&refine=zones%3A%22Zone%20A%22&refine=location%3A%22Lyon%22&refine=population%3A%22-%22`;
-}
+    let horairesEncours = [];
 
-// Fonction pour récupérer les vacances et déterminer l'état du jour
-async function getVacationStatus() {
-    const url = getApiUrl();
-    try {
+    const horairesParStatut = {
+      0: ["Pas de service"], // Dimanche
+      1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire
+      2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
+      3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
+      4: ["Pas de service"], // Jour férié
+      5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
+      6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
+    };
+
+    function getApiUrl() {
+      const currentYear = new Date().getFullYear();
+      return `https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records?limit=20&refine=start_date%3A%22${currentYear}%22&refine=zones%3A%22Zone%20A%22&refine=location%3A%22Lyon%22&refine=population%3A%22-%22`;
+    }
+
+    function getStatusDescription(code) {
+      switch (code) {
+        case 0: return "Dimanche";
+        case 1: return "Semaine scolaire (Lundi, Mardi, Jeudi, Vendredi)";
+        case 2: return "Mercredi";
+        case 3: return "Samedi";
+        case 4: return "Jour férié";
+        case 5: return "Semaine de vacances scolaires";
+        case 6: return "Vacances d'été";
+        default: return "État inconnu";
+      }
+    }
+
+    function getHorairesDuJour(code) {
+      return horairesParStatut[code] || ["Erreur : Statut inconnu"];
+    }
+
+    async function getVacationStatus() {
+      const url = getApiUrl();
+      try {
         const response = await fetch(url);
         const data = await response.json();
         if (!data.results) throw new Error("Données non disponibles");
 
         const today = new Date();
         const dayOfWeek = today.getDay(); // 0 = Dimanche, 6 = Samedi
-        let status = "Semaine scolaire"; // Valeur par défaut
+        let status = 1; // Par défaut : semaine scolaire
 
-        // Vérifie si aujourd'hui est un mercredi
-        const isWednesday = dayOfWeek === 3;
-
-        // Vérifie si aujourd'hui est un week-end
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-            status = dayOfWeek === 0 ? "Dimanche" : "Samedi";
+        if (dayOfWeek === 3) {
+          status = 2; // Mercredi
+          wedBool = true;
+        } else if (dayOfWeek === 0) {
+          status = 0; // Dimanche
+        } else if (dayOfWeek === 6) {
+          status = 3; // Samedi
         }
 
-        // Vérifie si aujourd'hui est un jour férié (exemple rapide, à améliorer avec une API dédiée)
-        const publicHolidays = ["2025-01-01", "2025-05-01", "2025-07-14", "2025-12-25"]; // Ajouter d'autres dates
+        const publicHolidays = ["2025-01-01", "2025-05-01", "2025-07-14", "2025-12-25"];
         const todayStr = today.toISOString().split("T")[0];
         if (publicHolidays.includes(todayStr)) {
-            status = "Jour férié";
+          status = 4; // Jour férié
         }
 
-        // Vérifie si aujourd'hui est une période de vacances
         for (const vacation of data.results) {
-            const startDate = new Date(vacation.start_date);
-            const endDate = new Date(vacation.end_date);
-            if (today >= startDate && today <= endDate) {
-                status = vacation.description === "Vacances d'Été" ? "Vacances d'été" : "Semaine de vacances scolaires";
-                break;
-            }
+          const startDate = new Date(vacation.start_date);
+          const endDate = new Date(vacation.end_date);
+          if (today >= startDate && today <= endDate) {
+            status = vacation.description.includes("Été") ? 6 : 5;
+            break;
+          }
         }
 
-        console.log(`Aujourd'hui, nous sommes : ${status}`);
-        if (isWednesday) {
-          console.log("Note : Aujourd'hui est un mercredi.");
-          wedBool = true;
-        }
-    } catch (error) {
-        console.error("Erreur lors de la récupération des données :", error);
+        stateHor = status;
+        horairesEncours = getHorairesDuJour(stateHor);
+
+        // Logs détaillés
+        console.log("✅ Statut détecté :", stateHor);
+        console.log("📅 Explication :", getStatusDescription(stateHor));
+        console.log("🕒 Horaires du jour :", horairesEncours);
+        if (wedBool) console.log("🔔 Aujourd'hui est un mercredi.");
+
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération des données :", error);
+      }
     }
-}
 
-// Exécute la fonction
-getVacationStatus();
-  </script>
-  <script>
-    // Définition des horaires pour chaque statut
-const horairesParStatut = {
-    0: ["Pas de service"], // Dimanche
-    1: ["06:30", "07:30", "08:30", "12:00", "16:30", "18:00"], // Semaine scolaire (Lun, Mar, Jeu, Ven)
-    2: ["07:00", "08:00", "12:30", "17:00"], // Mercredi
-    3: ["08:00", "10:00", "12:00", "14:00"], // Samedi
-    4: ["Pas de service"], // Jour férié
-    5: ["08:30", "10:30", "14:00", "17:00"], // Vacances scolaires
-    6: ["09:00", "11:00", "15:00", "18:00"], // Vacances d'été
-};
-
-// Fonction pour récupérer les horaires du jour
-function getHorairesDuJour(stateHor) {
-    return horairesParStatut[stateHor] || ["Erreur : Statut inconnu"]; // Retourne les horaires ou un message d'erreur
-}
-
-// Utilisation avec le statut actuel (stateHor est défini dans ton autre script)
-const horairesEncours = getHorairesDuJour(stateHor);
-
-// Affichage des horaires sélectionnés
-console.log("Horaires du jour :", horairesEncours);
+    // Lancer tout ça
+    getVacationStatus();
   </script>
 </body>
 </html>
